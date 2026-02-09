@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {},
+  "files": [],
+  "references": [
+    { "path": "./packages/lib-example" },
+    { "path": "./packages/app-example" }
+  ]
+}
