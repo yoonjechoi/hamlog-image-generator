@@ -14,11 +14,11 @@
  *
  * @example
  * ```typescript
- * // 이미지 배치 생성
+ * // 이미지 배치 생성 (참조이미지 1회 업로드 + n개 프롬프트)
  * const chat = createGeminiChatService();
  * await chat.startNewChat();
- * await chat.uploadFiles(referenceImages);
- * await chat.selectTool('image_generation');
+ * await chat.uploadFiles(referenceImages);  // 1회만 호출
+ * await chat.selectTool('image_generation'); // 1회만 호출
  *
  * for (const [i, prompt] of prompts.entries()) {
  *   await chat.sendPrompt(prompt);
@@ -31,6 +31,9 @@
  *     }
  *   }
  * }
+ *
+ * const url = chat.getConversationUrl();
+ * console.log(`대화 URL: ${url}`);
  * ```
  */
 
@@ -74,42 +77,56 @@ export interface IGeminiChatService {
   // Input
   // ─────────────────────────────────────────
 
-  /**
-   * 프롬프트를 입력하고 전송한다.
-   *
-   * 텍스트를 composer에 입력 후 전송 버튼을 클릭한다.
-   * 전송 직후 반환되며, 응답 완료를 기다리지 않는다.
-   * 응답을 기다리려면 `waitForResponse()`를 호출한다.
-   *
-   * @param text - 전송할 프롬프트 텍스트
-   */
-  sendPrompt(text: string): Promise<Result<void, GeminiError>>;
+   /**
+    * 프롬프트를 입력하고 전송한다.
+    *
+    * 텍스트를 composer에 입력 후 전송 버튼을 클릭한다.
+    * 전송 직후 반환되며, 응답 완료를 기다리지 않는다.
+    * 응답을 기다리려면 `waitForResponse()`를 호출한다.
+    *
+    * **배치 자동화 시**: 이전 응답 완료 직후 다음 프롬프트를 즉시 전송할 수 있다.
+    * 프롬프트 간 쿨다운은 필요 없다.
+    * (실험 결과: 10개 연속 전송에서 0건 실패 확인)
+    *
+    * @param text - 전송할 프롬프트 텍스트
+    */
+   sendPrompt(text: string): Promise<Result<void, GeminiError>>;
 
-  /**
-   * 파일을 업로드한다.
-   *
-   * 참조 이미지, 문서 등을 composer에 첨부한다.
-   * 업로드 완료 후 미리보기 칩이 나타나면 반환된다.
-   * `input[type="file"]`는 `multiple=true`를 지원한다.
-   *
-   * @param files - 업로드할 File 객체 배열
-   */
-  uploadFiles(files: File[]): Promise<Result<UploadedFile[], GeminiError>>;
+   /**
+    * 파일을 업로드한다.
+    *
+    * 참조 이미지, 문서 등을 composer에 첨부한다.
+    * 업로드 완료 후 미리보기 칩이 나타나면 반환된다.
+    *
+    * **배치 자동화 시**: 참조 이미지는 첫 번째 프롬프트에서 1회만 업로드하면 된다.
+    * 이후 프롬프트에서는 "같은 캐릭터" 등 텍스트 참조만으로 충분하다.
+    * (실험 결과: 10개 연속 프롬프트에서 1회 업로드로 일관성 유지 확인)
+    *
+    * **구현 참고**: DOM 구현체에서는 `upload-card-button` → `menuitem("파일 업로드")` →
+    * `upload_file` 순서로 업로드한다. hidden `input[type="file"]` 직접 접근은 실패한다.
+    *
+    * @param files - 업로드할 File 객체 배열 (`multiple=true` 지원)
+    */
+   uploadFiles(files: File[]): Promise<Result<UploadedFile[], GeminiError>>;
 
   // ─────────────────────────────────────────
   // Tools
   // ─────────────────────────────────────────
 
-  /**
-   * 도구를 선택(활성화)한다.
-   *
-   * 도구 메뉴를 열고 해당 도구의 `menuitemcheckbox`를 클릭한다.
-   * 활성화되면 composer에 선택 해제 칩이 나타난다.
-   * 이미 활성화된 도구를 다시 선택하면 no-op.
-   *
-   * @param tool - 선택할 도구
-   */
-  selectTool(tool: GeminiTool): Promise<Result<void, GeminiError>>;
+   /**
+    * 도구를 선택(활성화)한다.
+    *
+    * 도구 메뉴를 열고 해당 도구의 `menuitemcheckbox`를 클릭한다.
+    * 활성화되면 composer에 선택 해제 칩이 나타난다.
+    * 이미 활성화된 도구를 다시 선택하면 no-op.
+    *
+    * **배치 자동화 시**: 대화 시작 시 1회만 선택하면 대화 종료까지 유지된다.
+    * 이후 프롬프트에서 재선택할 필요 없다.
+    * (실험 결과: 10개 연속 프롬프트에서 1회 선택으로 도구 활성 상태 유지 확인)
+    *
+    * @param tool - 선택할 도구
+    */
+   selectTool(tool: GeminiTool): Promise<Result<void, GeminiError>>;
 
   /**
    * 도구를 해제(비활성화)한다.
@@ -231,24 +248,38 @@ export interface IGeminiChatService {
   // Download
   // ─────────────────────────────────────────
 
-  /**
-   * 이미지를 다운로드한다.
-   *
-   * 구현체에 따라:
-   * - DOM 구현: `chrome.downloads.download()` API 사용 (background script 위임)
-   * - API 구현: HTTP 다운로드
-   *
-   * @param image - 다운로드할 이미지 정보
-   * @param options - 파일명, 충돌 처리 등 옵션
-   */
-  downloadImage(
-    image: GeneratedImage,
-    options?: DownloadOptions,
-  ): Promise<Result<void, GeminiError>>;
+   /**
+    * 이미지를 다운로드한다.
+    *
+    * 구현체에 따라:
+    * - DOM 구현: `chrome.downloads.download()` API 사용 (background script 위임)
+    * - API 구현: HTTP 다운로드
+    *
+    * @param image - 다운로드할 이미지 정보
+    * @param options - 파일명, 충돌 처리 등 옵션
+    */
+   downloadImage(
+     image: GeneratedImage,
+     options?: DownloadOptions,
+   ): Promise<Result<void, GeminiError>>;
 
-  // ─────────────────────────────────────────
-  // Locale
-  // ─────────────────────────────────────────
+   // ─────────────────────────────────────────
+   // Conversation
+   // ─────────────────────────────────────────
+
+   /**
+    * 현재 대화의 URL을 반환한다.
+    *
+    * 대화가 시작되면 `gemini.google.com/app/{conversationId}` 형태의 URL이 생성된다.
+    * 새 채팅 상태(대화 시작 전)이면 `null`을 반환한다.
+    *
+    * @returns 현재 대화 URL 또는 null
+    */
+   getConversationUrl(): string | null;
+
+   // ─────────────────────────────────────────
+   // Locale
+   // ─────────────────────────────────────────
 
   /**
    * 현재 페이지 로케일을 반환한다.

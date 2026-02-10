@@ -27,6 +27,7 @@ export type {
 // ─── Selectors & i18n Constants ───
 export {
   ARIA_LABELS,
+  CONVERSATION_URL_PATTERN,
   ERROR_PATTERNS,
   MODE_LABELS,
   SELECTORS,
