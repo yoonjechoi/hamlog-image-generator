@@ -1,0 +1,111 @@
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import webExtension from '@samrum/vite-plugin-web-extension';
+
+type ExtensionManifest = chrome.runtime.ManifestV3;
+
+const manifestPath = resolve(__dirname, 'src/manifest.json');
+const baseManifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as ExtensionManifest;
+
+if (!baseManifest.content_scripts || baseManifest.content_scripts.length === 0) {
+  throw new Error('Manifest must include at least one content script entry.');
+}
+
+const manifest: ExtensionManifest = {
+  ...baseManifest,
+  background: {
+    ...(baseManifest.background ?? {}),
+    service_worker: 'src/background.ts',
+    type: 'module',
+  },
+  content_scripts: baseManifest.content_scripts.map((contentScript, index) =>
+    index === 0 ? { ...contentScript, js: ['src/content-script.ts'] } : contentScript
+  ),
+  action: {
+    ...(baseManifest.action ?? {}),
+    default_popup: 'src/popup/popup.html',
+  },
+};
+
+interface BundleOutputOptions {
+  dir?: string;
+}
+
+function normalizeExtensionOutput() {
+  return {
+    name: 'normalize-extension-output',
+    apply: 'build',
+    writeBundle(outputOptions: BundleOutputOptions) {
+      const outputDirName = typeof outputOptions.dir === 'string' ? outputOptions.dir : 'dist-ext';
+      const outputDir = resolve(__dirname, outputDirName);
+      const outputManifestPath = resolve(outputDir, 'manifest.json');
+      const outputManifest = JSON.parse(readFileSync(outputManifestPath, 'utf-8')) as ExtensionManifest;
+
+      const outputBackgroundPath = outputManifest.background?.service_worker;
+      if (typeof outputBackgroundPath === 'string') {
+        const sourcePath = resolve(outputDir, outputBackgroundPath);
+        if (existsSync(sourcePath)) {
+          const backgroundSource = readFileSync(sourcePath, 'utf-8').replace(/"\/assets\//g, '"./assets/');
+          writeFileSync(resolve(outputDir, 'background.js'), backgroundSource);
+        }
+
+        if (outputManifest.background) {
+          outputManifest.background.service_worker = 'background.js';
+        }
+      }
+
+      const outputContentScriptPath = outputManifest.content_scripts?.[0]?.js?.[0];
+      if (typeof outputContentScriptPath === 'string') {
+        const sourcePath = resolve(outputDir, outputContentScriptPath);
+        if (existsSync(sourcePath)) {
+          copyFileSync(sourcePath, resolve(outputDir, 'content-script.js'));
+        }
+
+        if (outputManifest.content_scripts?.[0]?.js) {
+          outputManifest.content_scripts[0].js = ['content-script.js'];
+        }
+      }
+
+      const outputPopupPath = outputManifest.action?.default_popup;
+      if (typeof outputPopupPath === 'string') {
+        const sourcePath = resolve(outputDir, outputPopupPath);
+        if (existsSync(sourcePath)) {
+          const popupSource = readFileSync(sourcePath, 'utf-8');
+          const scriptTagMatch = popupSource.match(
+            /<script\s+type="module"[^>]*src="([^"]+)"[^>]*><\/script>/
+          );
+
+          if (scriptTagMatch?.[1]) {
+            const generatedScriptPath = scriptTagMatch[1].replace(/^\//, '');
+            writeFileSync(
+              resolve(outputDir, 'popup.js'),
+              `import './${generatedScriptPath}';\n`
+            );
+            writeFileSync(
+              resolve(outputDir, 'popup.html'),
+              popupSource.replace(scriptTagMatch[0], '<script type="module" src="./popup.js"></script>')
+            );
+          } else {
+            writeFileSync(resolve(outputDir, 'popup.html'), popupSource);
+          }
+        }
+
+        if (outputManifest.action) {
+          outputManifest.action.default_popup = 'popup.html';
+        }
+      }
+
+      writeFileSync(outputManifestPath, `${JSON.stringify(outputManifest, null, 2)}\n`);
+    },
+  };
+}
+
+export default {
+  root: __dirname,
+  plugins: [webExtension({ manifest }), normalizeExtensionOutput()],
+  build: {
+    outDir: 'dist-ext',
+    emptyOutDir: true,
+  },
+};
