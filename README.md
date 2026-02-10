@@ -84,7 +84,7 @@ npx nx run-many --target=test --all
 ### Library package
 
 ```bash
-npx nx g @nx/js:lib packages/my-lib --publishable --importPath=@org/my-lib
+npx nx g @nx/js:lib packages/my-lib --publishable --importPath=@hamlog/my-lib
 ```
 
 ### Adding dependencies between packages
@@ -93,7 +93,7 @@ Edit `package.json`:
 ```json
 {
   "dependencies": {
-    "@org/my-lib": "*"
+"@hamlog/my-lib": "*"
   }
 }
 ```
@@ -129,7 +129,7 @@ git worktree remove ../feat-my-feature
 
 After creating from template:
 
-1. **Rename `@org`** → your org name in all `package.json` and `tsconfig.base.json`
+1. **Rename `@hamlog`** → your org name in all `package.json` and `tsconfig.base.json`
 2. **Remove example packages** when you have real ones
 3. **Add dependencies** (e.g., `fastify`, `next`, `ioredis`) to root `package.json`
 4. **Update AGENTS.md** with project-specific rules

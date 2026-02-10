@@ -44,6 +44,7 @@ Thumbs.db
 
 .nx/cache
 .nx/workspace-data
+.sisyphus/
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 

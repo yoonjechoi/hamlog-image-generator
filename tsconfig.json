@@ -3,7 +3,10 @@
   "compilerOptions": {},
   "files": [],
   "references": [
-    { "path": "./packages/lib-example" },
-    { "path": "./packages/app-example" }
+    { "path": "./packages/lib/core" },
+    { "path": "./packages/lib/gemini-client" },
+    { "path": "./packages/app/chrome-extension" },
+    { "path": "./packages/app/api" },
+    { "path": "./packages/app/web" }
   ]
 }

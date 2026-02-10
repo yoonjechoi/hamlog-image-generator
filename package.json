@@ -1,5 +1,5 @@
 {
-  "name": "@org/source",
+  "name": "@hamlog/source",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {},
@@ -11,6 +11,7 @@
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
+    "@types/chrome": "^0.1.28",
     "@types/node": "20.19.9",
     "@vitest/coverage-v8": "^4.0.0",
     "nx": "22.4.5",
@@ -22,6 +23,7 @@
     "vitest": "^4.0.8"
   },
   "workspaces": [
-    "packages/*"
+    "packages/lib/*",
+    "packages/app/*"
   ]
 }

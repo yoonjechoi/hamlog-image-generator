@@ -1,0 +1,21 @@
+import { createApp } from './server.js';
+
+/**
+ * API 서버를 시작한다.
+ */
+async function start(): Promise<void> {
+  const app = await createApp();
+  const port = Number(process.env.PORT ?? '3000');
+
+  try {
+    await app.listen({
+      host: '0.0.0.0',
+      port,
+    });
+  } catch (error) {
+    app.log.error(error);
+    process.exit(1);
+  }
+}
+
+void start();

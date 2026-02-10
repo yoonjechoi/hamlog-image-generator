@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "햄로그의 슬기로운 이미지 생성기",
+  "version": "0.0.1",
+  "description": "Gemini에서 이미지를 더 슬기롭게 생성하세요",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["https://gemini.google.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://gemini.google.com/app/*"],
+      "js": ["content-script.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

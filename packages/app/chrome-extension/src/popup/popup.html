@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>햄로그의 슬기로운 이미지 생성기</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        width: 280px;
+        font-family: 'Noto Sans KR', sans-serif;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+
+      #status {
+        margin: 0 0 12px;
+        font-size: 14px;
+      }
+
+      button {
+        width: 100%;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: 6px;
+        background: #1454d4;
+        color: #ffffff;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>햄로그의 슬기로운 이미지 생성기</h1>
+    <p id="status" aria-live="polite">Gemini 연결 확인 중...</p>
+    <button id="generate-button" type="button">이미지 생성</button>
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>
