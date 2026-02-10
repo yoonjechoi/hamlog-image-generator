@@ -152,12 +152,14 @@ export interface UploadedFile {
 // ─────────────────────────────────────────────
 
 /**
- * 응답 대기 옵션.
+ * 프롬프트 생성 옵션.
  */
-export interface WaitOptions {
-  /** 최대 대기 시간 (ms). 기본값: 120000 (2분) */
+export interface GenerateOptions {
+  /** 취소용 AbortSignal. 배치 중단 시 사용. */
+  readonly signal?: AbortSignal;
+  /** 최대 대기 시간 (ms). 기본값: 120_000 (2분) */
   readonly timeout?: number;
-  /** 상태 폴링 간격 (ms). 기본값: 1000 (1초) */
+  /** 상태 폴링 간격 (ms). 기본값: 1_000 (1초) */
   readonly pollInterval?: number;
 }
 
