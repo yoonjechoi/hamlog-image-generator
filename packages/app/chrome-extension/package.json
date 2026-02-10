@@ -15,7 +15,13 @@
       "default": "./dist/index.js"
     }
   },
+  "scripts": {
+    "build:ext": "vite build --config vite.ext.config.ts"
+  },
   "dependencies": {
     "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@samrum/vite-plugin-web-extension": "^latest"
   }
 }

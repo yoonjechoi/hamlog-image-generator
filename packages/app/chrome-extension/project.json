@@ -1,0 +1,13 @@
+{
+  "name": "@hamlog/chrome-extension",
+  "targets": {
+    "build-ext": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vite build --config vite.ext.config.ts",
+        "cwd": "packages/app/chrome-extension"
+      },
+      "dependsOn": ["^build"]
+    }
+  }
+}
