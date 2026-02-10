@@ -141,6 +141,10 @@ export interface ModelResponse {
 export interface UploadedFile {
   /** 원본 파일명 */
   readonly filename: string;
+  /** MIME 타입 (예: `'image/png'`, `'image/jpeg'`) */
+  readonly mimeType: string;
+  /** 미리보기 URL (blob URL 형태, 예: `blob:https://gemini.google.com/...`) */
+  readonly previewUrl?: string;
 }
 
 // ─────────────────────────────────────────────

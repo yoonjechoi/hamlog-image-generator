@@ -52,9 +52,17 @@ export const SELECTORS = {
   /** 이미지 다운로드 버튼 */
   DOWNLOAD_BUTTON: 'button[data-test-id="download-generated-image-button"]',
 
-  /** 새 채팅 링크 */
-  NEW_CHAT_LINK: 'a[href="/app"]',
+   /** 새 채팅 링크 */
+   NEW_CHAT_LINK: 'a[href="/app"]',
 } as const;
+
+/**
+ * Gemini 대화 URL 패턴.
+ *
+ * 대화가 시작되면 URL이 `gemini.google.com/app/{conversationId}` 형태로 변경된다.
+ * 이 정규식으로 conversation ID를 추출할 수 있다.
+ */
+export const CONVERSATION_URL_PATTERN = /^https:\/\/gemini\.google\.com\/app\/([a-f0-9]+)$/;
 
 // ─────────────────────────────────────────────
 // Aria Labels (i18n)
