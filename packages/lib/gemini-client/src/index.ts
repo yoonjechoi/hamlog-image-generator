@@ -8,6 +8,10 @@ export {
 
 // ─── Gemini Chat Service Interface ───
 export type { IGeminiChatService } from './lib/gemini-chat-service.interface.js';
+export {
+  GeminiChatDomService,
+  type MessageSender,
+} from './lib/gemini-chat-dom.service.js';
 
 // ─── Types ───
 export type {
