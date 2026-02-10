@@ -1,0 +1,10 @@
+
+> dev-browser@0.0.1 start-extension
+> npx tsx scripts/start-relay.ts
+
+[relay] CDP relay server started
+[relay]   HTTP: http://127.0.0.1:9222
+[relay]   CDP endpoint: ws://127.0.0.1:9222/cdp
+[relay]   Extension endpoint: ws://127.0.0.1:9222/extension
+[relay] 
+[relay] Waiting for extension to connect...
