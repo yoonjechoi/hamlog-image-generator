@@ -1,68 +1,50 @@
 ---
 platform: x
 date: 2026-02-11
-topic: IGeminiChatService interface refactoring
-tags: [build-in-public, chrome-extension, typescript]
+topic: Hamlog Image Generator — Gemini chat automation complete
+tags: [build-in-public, chrome-extension, gemini, ai-image]
 ---
 
-# Interface Refactoring: 17 methods → 11
+# My Chrome Extension can now control the Gemini chat window
 
-## 1/6
+## 1/5
 
-Building a Chrome Extension that automates batch image generation on Gemini's web UI.
+Making a webtoon? Same character, 50 different scenes. On Gemini that's: type prompt, wait, download, repeat. For every single image.
 
-Today I refactored the core interface. The old API had a 2-call pattern that was a bug waiting to happen.
+I'm building a Chrome Extension to automate this. One reference image, a list of prompts, hit start. It generates and downloads everything.
 
-## 2/6
+## 2/5
 
-Before:
+Today, Gemini chat automation is complete. It can:
+- Start new chats
+- Upload reference images
+- Pick image generation tools
+- Send prompts and get results
+- Download images with custom filenames
+- Switch fast/thinking modes
+- Cancel mid-batch
 
-```typescript
-await chat.sendPrompt(text);
-const res = await chat.waitForResponse();
-```
+All one line of code each.
 
-Forget that second call? Your next prompt fires while the previous one is still generating. Silent failure.
+## 3/5
 
-## 3/6
+Got here by experimenting with Claude Code. Opened Gemini, clicked every button, documented how the DOM responds. 53 screenshots.
 
-After:
+Fun findings: reference images persist across the conversation. Image tool stays selected too. Zero failures in a 10-image batch test.
 
-```typescript
-const result = await chat.generate(prompt, {
-  signal: controller.signal
-});
-```
+## 4/5
 
-One call = one intent. Send prompt, get response. The 20-40s wait is just the Promise being pending.
+Originally "send prompt" and "wait for response" were separate calls. In practice, you always call both together. So we merged them into one: generate().
 
-## 4/6
+17 methods down to 11. Internal stuff hidden as private. The surface is simple; the internals handle the complexity.
 
-The batch loop got much cleaner:
+## 5/5
 
-```typescript
-for (const [i, prompt] of prompts.entries()) {
-  const r = await chat.generate(prompt);
-  if (!r.success) continue;
-  for (const img of r.data.images)
-    await chat.downloadImage(img, {
-      filename: `${String(i+1).padStart(3,'0')}.png`
-    });
-}
-```
+Chat automation is done. Next up:
+1. Wire it into the actual Chrome Extension
+2. Build the UI — enter prompts, hit "start", watch it go
+3. Image gallery — browse everything you've generated
 
-## 5/6
+Knowing how to steer is one thing. Actually driving is another.
 
-Other changes:
-- 17 methods → 11 (moved internal polling/state methods to private)
-- Added AbortSignal for cancelling mid-batch
-- Removed WaitOptions, added GenerateOptions
-- +282 -725 lines. Less code, better API.
-
-## 6/6
-
-The key insight: in DOM automation, there's nothing useful to do between "send" and "wait". The UI is locked during generation. So why expose the split?
-
-Kill the temporal coupling. Ship one method.
-
-#BuildInPublic #TypeScript #ChromeExtension
+#BuildInPublic #ChromeExtension

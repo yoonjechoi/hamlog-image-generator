@@ -1,62 +1,53 @@
 ---
 platform: threads
 date: 2026-02-11
-topic: IGeminiChatService interface refactoring
-tags: [build-in-public, chrome-extension, typescript]
+topic: 슬기로운 이미지 생성기 — Gemini 채팅창 조종법 완성
+tags: [build-in-public, chrome-extension, gemini, ai-image]
 ---
 
-# 인터페이스 리팩토링: 17개 메서드 -> 11개
+# 슬기로운 이미지 생성기가 Gemini 채팅창을 조종할 수 있게 되었습니다
 
-## 1/4
+## 1/5
 
-Gemini 웹앱에서 이미지 배치 생성을 자동화하는 Chrome Extension을 만들고 있다.
+웹툰이나 일러스트를 그릴 때, 같은 캐릭터로 여러 장면의 이미지를 만들고 싶을 때가 있습니다.
+Gemini에서 하나하나 프롬프트 치고, 기다리고, 다운로드하고... 10장이면 괜찮지만 50장, 100장이면?
+"슬기로운 이미지 생성기"는 이 과정을 자동으로 해주는 Chrome Extension입니다. 참조 이미지 하나 올려놓으면, 프롬프트 목록을 순서대로 돌면서 이미지를 생성하고 다운로드까지 해줍니다.
 
-오늘은 핵심 인터페이스를 리팩토링했다. 기존에는 프롬프트를 보내고 응답을 받으려면 두 번 호출해야 했다.
+## 2/5
 
-```typescript
-// Before
-await chat.sendPrompt(text);
-const res = await chat.waitForResponse();
-```
+오늘, 드디어 Gemini 채팅창 조종법이 완성되었습니다.
+지금 할 수 있는 것들:
+- 새 채팅 시작하기
+- 참조 이미지 업로드하기
+- 이미지 생성 도구 선택하기
+- 프롬프트 입력하고 결과 받기
+- 생성된 이미지 원본 다운로드하기 (커스텀 파일명으로)
+- 빠른 모드 / 사고 모드 전환하기
+- 배치 도중 취소하기
+이 모든 게 코드 한 줄씩으로 가능합니다.
 
-두 번째 호출을 빠뜨리면? 이전 응답이 끝나기 전에 다음 프롬프트가 발사된다. 조용한 버그.
+## 3/5
 
-## 2/4
+여기까지 오는 데 Claude Code와 함께 꽤 많은 실험을 했습니다.
+실제로 Gemini 웹페이지를 브라우저로 띄워서, 버튼 하나하나를 눌러보고, 어떤 HTML 요소가 어떻게 반응하는지 53장의 스크린샷과 함께 기록했습니다.
+재밌었던 발견들:
+- 참조 이미지는 처음 한 번만 올리면 대화 내내 유지됨
+- 이미지 생성 도구도 한 번만 선택하면 계속 유지됨
+- 프롬프트 사이에 쉬는 시간 없이 바로바로 보내도 됨
+- 10개 연속 생성 실험에서 실패 0건
 
-한 줄로 바꿨다.
+## 4/5
 
-```typescript
-// After
-const result = await chat.generate(prompt, {
-  signal: controller.signal
-});
-```
+처음에는 "프롬프트 보내기"와 "결과 기다리기"를 따로 만들었는데, 써보니 항상 둘을 같이 호출해야 했습니다.
+그래서 하나로 합쳤습니다. "프롬프트를 보내면 결과가 온다" — 이게 자연스러운 흐름이니까.
+17개였던 기능을 11개로 정리하고, 안쪽에서만 쓰이는 것들은 밖에서 안 보이게 숨겼습니다. 겉은 단순하게, 속은 똑똑하게.
 
-"프롬프트 보내고 결과 받기"라는 의도가 함수 하나에 담긴다. 이미지 생성 20-40초 대기는 그냥 Promise가 pending인 것뿐.
+## 5/5
 
-AbortSignal도 추가해서 배치 도중 취소도 가능하다.
+Gemini 채팅창 조종법은 완성됐으니, 이제 남은 건:
+1. 실제 Chrome Extension에 연결하기 — 지금은 설계도만 있는 상태
+2. 사용자 화면 만들기 — 프롬프트 목록 입력하고 "시작" 버튼 누르면 자동 생성
+3. 생성된 이미지 갤러리 — 내가 만든 이미지들을 한눈에 보는 웹페이지
+조종법을 아는 것과, 실제로 운전하는 건 다르니까요.
 
-## 3/4
-
-배치 루프가 깔끔해졌다.
-
-```typescript
-for (const [i, prompt] of prompts.entries()) {
-  const r = await chat.generate(prompt);
-  if (!r.success) continue;
-  for (const img of r.data.images)
-    await chat.downloadImage(img, {
-      filename: `${String(i+1).padStart(3,'0')}.png`
-    });
-}
-```
-
-17개 메서드 -> 11개. 내부 폴링/상태 관리 메서드들은 private으로 내렸다. +282 -725줄. 코드는 줄고 API는 나아졌다.
-
-## 4/4
-
-핵심 깨달음: DOM 자동화에서 "전송"과 "대기" 사이에 할 수 있는 일이 없다. 생성 중엔 UI가 잠기니까. 그러면 왜 나눠서 노출하나?
-
-temporal coupling 끊고 메서드 하나로 합치는 게 답이었다.
-
-#BuildInPublic #TypeScript
+#BuildInPublic #슬기로운이미지생성기
