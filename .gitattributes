@@ -1,3 +1,4 @@
 docs/research/screenshots/*.png filter=lfs diff=lfs merge=lfs -text
 docs/research/network/*.txt filter=lfs diff=lfs merge=lfs -text
 docs/research/test-assets/*.png filter=lfs diff=lfs merge=lfs -text
+docs/build-in-public/*.png filter=lfs diff=lfs merge=lfs -text
