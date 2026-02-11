@@ -48,4 +48,9 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
+# Agent skills symlinks (canonical source: .agents/skills/)
+.agent/skills/
+.claude/skills/
+.cursor/skills/
+
 vitest.config.*.timestamp*
