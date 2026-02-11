@@ -4,6 +4,7 @@ import { elementNotFound, geminiError, policyBlocked, timeout } from './types/er
 import type {
   ChatMode,
   DownloadOptions,
+  GenerateOptions,
   GeminiError,
   GeminiLocale,
   GeminiTool,
@@ -11,7 +12,6 @@ import type {
   GenerationState,
   ModelResponse,
   UploadedFile,
-  WaitOptions,
 } from './types/gemini-chat.types.js';
 import {
   ARIA_LABELS,
@@ -46,7 +46,27 @@ export class GeminiChatDomService implements IGeminiChatService {
     return ok(undefined);
   }
 
-  public async sendPrompt(text: string): Promise<Result<void, GeminiError>> {
+  public async generate(
+    prompt: string,
+    options?: GenerateOptions,
+  ): Promise<Result<ModelResponse, GeminiError>> {
+    const sendResult = await this.sendPrompt(prompt);
+    if (!sendResult.success) {
+      return sendResult;
+    }
+
+    if (options?.signal?.aborted) {
+      return err(geminiError('INVALID_STATE', 'Generation aborted'));
+    }
+
+    return this.waitForResponse({
+      timeout: options?.timeout,
+      pollInterval: options?.pollInterval,
+      signal: options?.signal,
+    });
+  }
+
+  private async sendPrompt(text: string): Promise<Result<void, GeminiError>> {
     const textbox = this.document.querySelector<HTMLDivElement>(SELECTORS.PROMPT_INPUT);
     if (!textbox) {
       return err(elementNotFound(SELECTORS.PROMPT_INPUT));
@@ -227,7 +247,7 @@ export class GeminiChatDomService implements IGeminiChatService {
     return 'fast';
   }
 
-  public getGenerationState(): GenerationState {
+  private getGenerationState(): GenerationState {
     const responses = this.document.querySelectorAll(SELECTORS.MODEL_RESPONSE);
     if (responses.length === 0) {
       return 'idle';
@@ -261,11 +281,11 @@ export class GeminiChatDomService implements IGeminiChatService {
     return hasGeneratedImage ? 'image_completed' : 'completed';
   }
 
-  public isGenerating(): boolean {
+  private isGenerating(): boolean {
     return this.getGenerationState() === 'generating';
   }
 
-  public async stopGeneration(): Promise<Result<void, GeminiError>> {
+  private async stopGeneration(): Promise<Result<void, GeminiError>> {
     if (!this.isGenerating()) {
       return ok(undefined);
     }
@@ -279,12 +299,21 @@ export class GeminiChatDomService implements IGeminiChatService {
     return ok(undefined);
   }
 
-  public async waitForResponse(options?: WaitOptions): Promise<Result<ModelResponse, GeminiError>> {
+  private async waitForResponse(options?: {
+    timeout?: number;
+    pollInterval?: number;
+    signal?: AbortSignal;
+  }): Promise<Result<ModelResponse, GeminiError>> {
     const timeoutMs = options?.timeout ?? 120_000;
     const pollIntervalMs = options?.pollInterval ?? 1_000;
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
+      if (options?.signal?.aborted) {
+        await this.stopGeneration();
+        return err(geminiError('INVALID_STATE', 'Generation aborted'));
+      }
+
       const state = this.getGenerationState();
 
       if (state !== 'generating' && state !== 'idle') {
@@ -303,25 +332,9 @@ export class GeminiChatDomService implements IGeminiChatService {
     return err(timeout('waitForResponse', timeoutMs));
   }
 
-  public getResponses(): ModelResponse[] {
-    return this.parseResponses();
-  }
-
-  public getLastResponse(): ModelResponse | null {
-    const responses = this.getResponses();
+  private getLastResponse(): ModelResponse | null {
+    const responses = this.parseResponses();
     return responses.length > 0 ? responses[responses.length - 1] ?? null : null;
-  }
-
-  public getResponseCount(): number {
-    return this.getResponses().length;
-  }
-
-  public getGeneratedImages(): GeneratedImage[] {
-    return this.getResponses().flatMap((response) => [...response.images]);
-  }
-
-  public getGeneratedImageCount(): number {
-    return this.getGeneratedImages().length;
   }
 
   public async downloadImage(

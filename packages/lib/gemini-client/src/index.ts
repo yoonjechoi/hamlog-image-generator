@@ -21,11 +21,11 @@ export type {
   GeminiErrorCode,
   GeminiLocale,
   GeminiTool,
+  GenerateOptions,
   GeneratedImage,
   GenerationState,
   ModelResponse,
   UploadedFile,
-  WaitOptions,
 } from './lib/types/gemini-chat.types.js';
 
 // ─── Selectors & i18n Constants ───
