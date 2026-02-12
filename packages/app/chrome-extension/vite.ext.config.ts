@@ -1,9 +1,20 @@
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import webExtension from '@samrum/vite-plugin-web-extension';
+import type { Plugin } from 'vite';
 
 type ExtensionManifest = chrome.runtime.ManifestV3;
+
+/**
+ * ManifestV3 확장 — side_panel 키를 포함한다.
+ * Chrome 타입에 아직 side_panel이 포함되지 않으므로 별도 정의한다.
+ */
+interface ManifestWithSidePanel extends ExtensionManifest {
+  side_panel?: { default_path?: string };
+}
 
 const manifestPath = resolve(__dirname, 'src/manifest.json');
 const baseManifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as ExtensionManifest;
@@ -24,7 +35,9 @@ const manifest: ExtensionManifest = {
   ),
   action: {
     ...(baseManifest.action ?? {}),
-    default_popup: 'src/popup/popup.html',
+  },
+  side_panel: {
+    default_path: 'src/sidepanel/sidepanel.html',
   },
 };
 
@@ -32,7 +45,7 @@ interface BundleOutputOptions {
   dir?: string;
 }
 
-function normalizeExtensionOutput() {
+function normalizeExtensionOutput(): Plugin {
   return {
     name: 'normalize-extension-output',
     apply: 'build',
@@ -46,7 +59,8 @@ function normalizeExtensionOutput() {
       if (typeof outputBackgroundPath === 'string') {
         const sourcePath = resolve(outputDir, outputBackgroundPath);
         if (existsSync(sourcePath)) {
-          const backgroundSource = readFileSync(sourcePath, 'utf-8').replace(/"\/assets\//g, '"./assets/');
+          const ABSOLUTE_ASSET_PATH = /"\/(assets\/)/g;
+          const backgroundSource = readFileSync(sourcePath, 'utf-8').replace(ABSOLUTE_ASSET_PATH, '"./$1');
           writeFileSync(resolve(outputDir, 'background.js'), backgroundSource);
         }
 
@@ -67,32 +81,33 @@ function normalizeExtensionOutput() {
         }
       }
 
-      const outputPopupPath = outputManifest.action?.default_popup;
-      if (typeof outputPopupPath === 'string') {
-        const sourcePath = resolve(outputDir, outputPopupPath);
+      const sidePanel = (outputManifest as ManifestWithSidePanel).side_panel;
+      const outputSidePanelPath = sidePanel?.default_path;
+      if (typeof outputSidePanelPath === 'string') {
+        const sourcePath = resolve(outputDir, outputSidePanelPath);
         if (existsSync(sourcePath)) {
-          const popupSource = readFileSync(sourcePath, 'utf-8');
-          const scriptTagMatch = popupSource.match(
+          const sidepanelSource = readFileSync(sourcePath, 'utf-8');
+          const scriptTagMatch = sidepanelSource.match(
             /<script\s+type="module"[^>]*src="([^"]+)"[^>]*><\/script>/
           );
 
           if (scriptTagMatch?.[1]) {
             const generatedScriptPath = scriptTagMatch[1].replace(/^\//, '');
             writeFileSync(
-              resolve(outputDir, 'popup.js'),
+              resolve(outputDir, 'sidepanel.js'),
               `import './${generatedScriptPath}';\n`
             );
             writeFileSync(
-              resolve(outputDir, 'popup.html'),
-              popupSource.replace(scriptTagMatch[0], '<script type="module" src="./popup.js"></script>')
+              resolve(outputDir, 'sidepanel.html'),
+              sidepanelSource.replace(scriptTagMatch[0], '<script type="module" src="./sidepanel.js"></script>')
             );
           } else {
-            writeFileSync(resolve(outputDir, 'popup.html'), popupSource);
+            writeFileSync(resolve(outputDir, 'sidepanel.html'), sidepanelSource);
           }
         }
 
-        if (outputManifest.action) {
-          outputManifest.action.default_popup = 'popup.html';
+        if (sidePanel) {
+          sidePanel.default_path = 'sidepanel.html';
         }
       }
 
@@ -103,7 +118,7 @@ function normalizeExtensionOutput() {
 
 export default {
   root: __dirname,
-  plugins: [webExtension({ manifest }), normalizeExtensionOutput()],
+  plugins: [react(), tailwindcss(), webExtension({ manifest }), normalizeExtensionOutput()],
   resolve: {
     alias: {
       '@hamlog/gemini-client': resolve(__dirname, '../../lib/gemini-client/src/index.ts'),
