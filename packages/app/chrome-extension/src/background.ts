@@ -4,6 +4,7 @@ import type {
   ExtensionResponseMessage,
 } from './types/chrome-messages.js';
 import { isGeminiAppUrl } from './types/chrome-messages.js';
+import { downloadImage } from './services/download-service.js';
 
 export type {
   ContentScriptCommandMessage,
@@ -69,6 +70,14 @@ export async function handleBackgroundMessage(
       await chrome.tabs.sendMessage(sourceTab.id, command);
 
       return { type: 'IMAGE_GENERATION_TRIGGERED', accepted: true };
+    }
+
+    case 'DOWNLOAD_IMAGE': {
+      const result = await downloadImage(message.url, message.filename);
+      if (result.success) {
+        return { type: 'DOWNLOAD_COMPLETE', downloadId: result.data };
+      }
+      return { type: 'ERROR', message: result.error };
     }
 
     default:

@@ -3,7 +3,7 @@
   "name": "햄로그의 슬기로운 이미지 생성기",
   "version": "0.0.1",
   "description": "Gemini에서 이미지를 더 슬기롭게 생성하세요",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "downloads"],
   "host_permissions": ["https://gemini.google.com/*"],
   "action": {
     "default_popup": "popup.html",
