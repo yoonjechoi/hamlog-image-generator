@@ -15,7 +15,7 @@ export function fileToDataUrl(file: File): Promise<string> {
       }
     };
     reader.onerror = () => {
-      reject(new Error('Failed to read file'));
+      reject(reader.error ?? new Error('Failed to read file'));
     };
     reader.readAsDataURL(file);
   });
@@ -29,13 +29,21 @@ export function fileToDataUrl(file: File): Promise<string> {
  */
 export function dataUrlToFile(dataUrl: string, filename: string): File {
   const parts = dataUrl.split(',');
+  if (parts.length < 2 || !parts[0].startsWith('data:')) {
+    throw new Error('Invalid data URL format');
+  }
   const header = parts[0];
   const data = parts[1];
 
   const mimeMatch = header.match(/:(.*?);/);
   const mimeType = mimeMatch ? mimeMatch[1] : '';
 
-  const binaryString = atob(data);
+  let binaryString: string;
+  try {
+    binaryString = atob(data);
+  } catch (cause) {
+    throw new Error('Invalid base64 data', { cause });
+  }
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);

@@ -33,10 +33,10 @@ export function useGeminiConnection(): GeminiConnectionState {
   const [state, setState] = useState<GeminiConnectionState>({ connected: false, checking: true });
 
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
 
     void checkGeminiConnection().then(({ connected }) => {
-      if (!active) {
+      if (controller.signal.aborted) {
         return;
       }
 
@@ -44,7 +44,7 @@ export function useGeminiConnection(): GeminiConnectionState {
     });
 
     return () => {
-      active = false;
+      controller.abort();
     };
   }, []);
 

@@ -62,6 +62,14 @@ describe('file-converter', () => {
       expect(file).toBeInstanceOf(File);
       expect(file.name).toBe(filename);
     });
+
+    it('should throw on invalid data URL format', () => {
+      expect(() => dataUrlToFile('not-a-data-url', 'test.txt')).toThrow('Invalid data URL format');
+    });
+
+    it('should throw on invalid base64 data', () => {
+      expect(() => dataUrlToFile('data:text/plain;base64,!!!invalid!!!', 'test.txt')).toThrow('Invalid base64 data');
+    });
   });
 
   describe('round-trip conversion', () => {

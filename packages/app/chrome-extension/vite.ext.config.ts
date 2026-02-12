@@ -4,8 +4,17 @@ import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import webExtension from '@samrum/vite-plugin-web-extension';
+import type { Plugin } from 'vite';
 
 type ExtensionManifest = chrome.runtime.ManifestV3;
+
+/**
+ * ManifestV3 확장 — side_panel 키를 포함한다.
+ * Chrome 타입에 아직 side_panel이 포함되지 않으므로 별도 정의한다.
+ */
+interface ManifestWithSidePanel extends ExtensionManifest {
+  side_panel?: { default_path?: string };
+}
 
 const manifestPath = resolve(__dirname, 'src/manifest.json');
 const baseManifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as ExtensionManifest;
@@ -36,7 +45,7 @@ interface BundleOutputOptions {
   dir?: string;
 }
 
-function normalizeExtensionOutput() {
+function normalizeExtensionOutput(): Plugin {
   return {
     name: 'normalize-extension-output',
     apply: 'build',
@@ -50,7 +59,8 @@ function normalizeExtensionOutput() {
       if (typeof outputBackgroundPath === 'string') {
         const sourcePath = resolve(outputDir, outputBackgroundPath);
         if (existsSync(sourcePath)) {
-          const backgroundSource = readFileSync(sourcePath, 'utf-8').replace(/"\/assets\//g, '"./assets/');
+          const ABSOLUTE_ASSET_PATH = /"\/(assets\/)/g;
+          const backgroundSource = readFileSync(sourcePath, 'utf-8').replace(ABSOLUTE_ASSET_PATH, '"./$1');
           writeFileSync(resolve(outputDir, 'background.js'), backgroundSource);
         }
 
@@ -71,9 +81,7 @@ function normalizeExtensionOutput() {
         }
       }
 
-      const sidePanel = (outputManifest as Record<string, unknown>).side_panel as
-        | { default_path?: string }
-        | undefined;
+      const sidePanel = (outputManifest as ManifestWithSidePanel).side_panel;
       const outputSidePanelPath = sidePanel?.default_path;
       if (typeof outputSidePanelPath === 'string') {
         const sourcePath = resolve(outputDir, outputSidePanelPath);

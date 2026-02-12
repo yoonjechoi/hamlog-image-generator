@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card.js';
 import { ConnectionStatus } from './components/ConnectionStatus.js';
 import { ProjectNameInput } from './components/ProjectNameInput.js';
@@ -15,7 +16,7 @@ import { parsePrompts } from './utils/prompt-parser.js';
 export function App() {
   const connection = useGeminiConnection();
   const form = useBatchForm();
-  const prompts = parsePrompts(form.promptText);
+  const prompts = useMemo(() => parsePrompts(form.promptText), [form.promptText]);
   const canSubmit =
     connection.connected &&
     form.projectName.trim().length > 0 &&

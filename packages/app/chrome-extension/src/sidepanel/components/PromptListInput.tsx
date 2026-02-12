@@ -1,5 +1,6 @@
 import { Textarea } from './ui/textarea.js';
 import { Label } from './ui/label.js';
+import { parsePrompts } from '../utils/prompt-parser.js';
 
 /**
  * PromptListInput 컴포넌트의 props 타입이다.
@@ -13,7 +14,7 @@ interface PromptListInputProps {
  * 프롬프트 목록 입력 필드를 렌더링한다.
  */
 export function PromptListInput({ value, onChange }: PromptListInputProps) {
-  const lineCount = value.split('\n').filter((l) => l.trim().length > 0).length;
+  const lineCount = parsePrompts(value).length;
 
   return (
     <div className="space-y-2">
