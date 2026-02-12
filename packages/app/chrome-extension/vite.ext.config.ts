@@ -1,6 +1,8 @@
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import webExtension from '@samrum/vite-plugin-web-extension';
 
 type ExtensionManifest = chrome.runtime.ManifestV3;
@@ -103,7 +105,7 @@ function normalizeExtensionOutput() {
 
 export default {
   root: __dirname,
-  plugins: [webExtension({ manifest }), normalizeExtensionOutput()],
+  plugins: [react(), tailwindcss(), webExtension({ manifest }), normalizeExtensionOutput()],
   resolve: {
     alias: {
       '@hamlog/gemini-client': resolve(__dirname, '../../lib/gemini-client/src/index.ts'),
