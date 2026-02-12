@@ -22,6 +22,10 @@ export type ExtensionResponseMessage =
 export type ContentScriptCommandMessage = {
   type: 'RUN_IMAGE_GENERATION';
   prompt: string;
+  options?: {
+    systemPrompt?: string;
+    referenceImages?: string[];
+  };
 };
 
 /**

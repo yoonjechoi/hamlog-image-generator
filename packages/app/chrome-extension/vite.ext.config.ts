@@ -104,6 +104,12 @@ function normalizeExtensionOutput() {
 export default {
   root: __dirname,
   plugins: [webExtension({ manifest }), normalizeExtensionOutput()],
+  resolve: {
+    alias: {
+      '@hamlog/gemini-client': resolve(__dirname, '../../lib/gemini-client/src/index.ts'),
+      '@hamlog/core': resolve(__dirname, '../../lib/core/src/index.ts'),
+    },
+  },
   build: {
     outDir: 'dist-ext',
     emptyOutDir: true,

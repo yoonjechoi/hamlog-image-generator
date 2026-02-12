@@ -1,8 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'node:path';
 
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../../node_modules/.vite/packages/app/chrome-extension',
+  resolve: {
+    alias: {
+      '@hamlog/gemini-client': resolve(__dirname, '../../lib/gemini-client/dist/index.js'),
+      '@hamlog/core': resolve(__dirname, '../../lib/core/dist/index.js'),
+    },
+  },
   test: {
     name: '@hamlog/chrome-extension',
     watch: false,
