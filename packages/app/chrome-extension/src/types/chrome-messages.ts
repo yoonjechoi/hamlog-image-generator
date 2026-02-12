@@ -5,7 +5,8 @@ export type ExtensionRequestMessage =
   | { type: 'PING' }
   | { type: 'POPUP_READY' }
   | { type: 'CHECK_GEMINI_CONNECTION'; tabId?: number }
-  | { type: 'GENERATE_IMAGE'; prompt: string };
+  | { type: 'GENERATE_IMAGE'; prompt: string }
+  | { type: 'DOWNLOAD_IMAGE'; url: string; filename: string };
 
 /**
  * 확장 프로그램에서 사용하는 응답 메시지 타입이다.
@@ -14,6 +15,7 @@ export type ExtensionResponseMessage =
   | { type: 'PONG'; isGeminiTab: boolean }
   | { type: 'GEMINI_CONNECTION_STATUS'; connected: boolean; tabId?: number }
   | { type: 'IMAGE_GENERATION_TRIGGERED'; accepted: boolean }
+  | { type: 'DOWNLOAD_COMPLETE'; downloadId: number }
   | { type: 'ERROR'; message: string };
 
 /**
@@ -64,7 +66,7 @@ export function isExtensionRequestMessage(value: unknown): value is ExtensionReq
     return false;
   }
 
-  const message = value as { type: string; prompt?: unknown; tabId?: unknown };
+  const message = value as { type: string; prompt?: unknown; tabId?: unknown; url?: unknown; filename?: unknown };
 
   switch (message.type) {
     case 'PING':
@@ -74,6 +76,8 @@ export function isExtensionRequestMessage(value: unknown): value is ExtensionReq
       return message.tabId === undefined || typeof message.tabId === 'number';
     case 'GENERATE_IMAGE':
       return typeof message.prompt === 'string';
+    case 'DOWNLOAD_IMAGE':
+      return typeof message.url === 'string' && typeof message.filename === 'string';
     default:
       return false;
   }
