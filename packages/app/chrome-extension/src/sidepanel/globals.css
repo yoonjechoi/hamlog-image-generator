@@ -57,8 +57,8 @@
   body {
     @apply bg-background text-foreground;
     margin: 0;
-    width: 400px;
-    min-height: 500px;
+    width: 100%;
+    min-height: 100vh;
     font-family: 'Noto Sans KR', system-ui, sans-serif;
   }
 }

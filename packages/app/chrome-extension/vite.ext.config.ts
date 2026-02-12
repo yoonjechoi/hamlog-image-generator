@@ -26,7 +26,9 @@ const manifest: ExtensionManifest = {
   ),
   action: {
     ...(baseManifest.action ?? {}),
-    default_popup: 'src/popup/popup.html',
+  },
+  side_panel: {
+    default_path: 'src/sidepanel/sidepanel.html',
   },
 };
 
@@ -69,32 +71,35 @@ function normalizeExtensionOutput() {
         }
       }
 
-      const outputPopupPath = outputManifest.action?.default_popup;
-      if (typeof outputPopupPath === 'string') {
-        const sourcePath = resolve(outputDir, outputPopupPath);
+      const sidePanel = (outputManifest as Record<string, unknown>).side_panel as
+        | { default_path?: string }
+        | undefined;
+      const outputSidePanelPath = sidePanel?.default_path;
+      if (typeof outputSidePanelPath === 'string') {
+        const sourcePath = resolve(outputDir, outputSidePanelPath);
         if (existsSync(sourcePath)) {
-          const popupSource = readFileSync(sourcePath, 'utf-8');
-          const scriptTagMatch = popupSource.match(
+          const sidepanelSource = readFileSync(sourcePath, 'utf-8');
+          const scriptTagMatch = sidepanelSource.match(
             /<script\s+type="module"[^>]*src="([^"]+)"[^>]*><\/script>/
           );
 
           if (scriptTagMatch?.[1]) {
             const generatedScriptPath = scriptTagMatch[1].replace(/^\//, '');
             writeFileSync(
-              resolve(outputDir, 'popup.js'),
+              resolve(outputDir, 'sidepanel.js'),
               `import './${generatedScriptPath}';\n`
             );
             writeFileSync(
-              resolve(outputDir, 'popup.html'),
-              popupSource.replace(scriptTagMatch[0], '<script type="module" src="./popup.js"></script>')
+              resolve(outputDir, 'sidepanel.html'),
+              sidepanelSource.replace(scriptTagMatch[0], '<script type="module" src="./sidepanel.js"></script>')
             );
           } else {
-            writeFileSync(resolve(outputDir, 'popup.html'), popupSource);
+            writeFileSync(resolve(outputDir, 'sidepanel.html'), sidepanelSource);
           }
         }
 
-        if (outputManifest.action) {
-          outputManifest.action.default_popup = 'popup.html';
+        if (sidePanel) {
+          sidePanel.default_path = 'sidepanel.html';
         }
       }
 

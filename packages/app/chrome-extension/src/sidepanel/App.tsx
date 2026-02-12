@@ -10,7 +10,7 @@ import { useBatchForm } from './hooks/useBatchForm.js';
 import { parsePrompts } from './utils/prompt-parser.js';
 
 /**
- * Chrome Extension 팝업의 루트 컴포넌트이다.
+ * Chrome Extension 사이드 패널의 루트 컴포넌트이다.
  */
 export function App() {
   const connection = useGeminiConnection();
