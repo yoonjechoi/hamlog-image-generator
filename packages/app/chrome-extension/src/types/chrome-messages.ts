@@ -34,7 +34,7 @@ export type ContentScriptCommandMessage = {
  * Gemini 앱 URL인지 확인한다.
  */
 export function isGeminiAppUrl(url: string): boolean {
-  return /^https:\/\/gemini\.google\.com\/app\//.test(url);
+  return /^https:\/\/gemini\.google\.com\/app(\/|$)/.test(url);
 }
 
 /**
