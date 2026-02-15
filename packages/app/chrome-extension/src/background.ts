@@ -85,6 +85,10 @@ export async function handleBackgroundMessage(
   }
 }
 
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+});
+
 chrome.runtime.onMessage.addListener((message: ExtensionRequestMessage, sender, sendResponse) => {
   void handleBackgroundMessage(message, sender)
     .then((response) => {
